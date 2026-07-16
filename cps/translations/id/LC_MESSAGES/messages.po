@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-07-05 13:13+0000\n"
+"POT-Creation-Date: 2026-07-16 21:05+0000\n"
 "PO-Revision-Date: 2023-01-21 10:00+0700\n"
 "Last-Translator: Arief Hidayat<arihid95@gmail.com>\n"
 "Language-Team: Arief Hidayat <arihid95@gmail.com>\n"
@@ -398,7 +398,7 @@ msgstr ""
 #: cps/admin.py:2558 cps/admin.py:2829 cps/editbooks.py:1046
 #: cps/editbooks.py:1830 cps/shelf.py:93 cps/shelf.py:167 cps/shelf.py:228
 #: cps/shelf.py:278 cps/shelf.py:315 cps/shelf.py:389 cps/shelf.py:511
-#: cps/tasks/convert.py:145 cps/web.py:2678
+#: cps/tasks/convert.py:145 cps/web.py:2682
 #, python-format
 msgid "Oops! Database Error: %(error)s."
 msgstr "Kesalahan basis data: %(error)s"
@@ -440,7 +440,7 @@ msgstr "Durasi tidak valid untuk tugas yang ditentukan"
 msgid "Scheduled tasks settings updated"
 msgstr "Pengaturan tugas terjadwal diperbarui"
 
-#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2109
+#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2113
 msgid "Oops! An unknown error occurred. Please try again later."
 msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 
@@ -448,7 +448,7 @@ msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 msgid "Settings DB is not Writeable"
 msgstr "Pengaturan DB tidak dapat ditulisi"
 
-#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2604 cps/web.py:2729
+#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2608 cps/web.py:2733
 #, fuzzy
 msgid "title"
 msgstr "Judul"
@@ -610,7 +610,7 @@ msgstr "Pengaturan Basis Data diperbarui"
 msgid "Database Configuration"
 msgstr "Pengaturan Basis Data"
 
-#: cps/admin.py:2514 cps/web.py:2078
+#: cps/admin.py:2514 cps/web.py:2082
 msgid "Oops! Please complete all fields."
 msgstr "Harap masukkan seluruh isian!"
 
@@ -644,7 +644,7 @@ msgstr "Tidak dapat menghapus Pengguna Tamu"
 msgid "No admin user remaining, can't delete user"
 msgstr "Tidak ada pengguna admin tersisa, tidak dapat menghapus pengguna"
 
-#: cps/admin.py:2780 cps/web.py:2413
+#: cps/admin.py:2780 cps/web.py:2417
 msgid "Email can't be empty and has to be a valid Email"
 msgstr "Alamat email tidak boleh kosong dan harus berupa email yang valid"
 
@@ -1117,8 +1117,8 @@ msgstr ""
 #: cps/templates/config_view_edit.html:79
 #: cps/templates/config_view_edit.html:90 cps/templates/email_edit.html:41
 #: cps/web.py:645 cps/web.py:679 cps/web.py:724 cps/web.py:764 cps/web.py:793
-#: cps/web.py:1599 cps/web.py:1636 cps/web.py:1687 cps/web.py:1719
-#: cps/web.py:1758
+#: cps/web.py:1603 cps/web.py:1640 cps/web.py:1691 cps/web.py:1723
+#: cps/web.py:1762
 msgid "None"
 msgstr "Tidak ada"
 
@@ -1220,8 +1220,8 @@ msgstr "Ekstensi berkas '%(ext)s' tidak diizinkan untuk diunggah ke server ini"
 msgid "File to be uploaded must have an extension"
 msgstr "Berkas yang akan diunggah harus memiliki ekstensi"
 
-#: cps/editbooks.py:845 cps/editbooks.py:1453 cps/web.py:612 cps/web.py:2790
-#: cps/web.py:2881 cps/web.py:2966
+#: cps/editbooks.py:845 cps/editbooks.py:1453 cps/web.py:612 cps/web.py:2794
+#: cps/web.py:2885 cps/web.py:2970
 msgid ""
 "Oops! Selected book is unavailable. File does not exist or is not accessible"
 msgstr ""
@@ -1738,7 +1738,7 @@ msgstr "{}★"
 
 #: cps/remotelogin.py:76 cps/templates/layout.html:135
 #: cps/templates/layout.html:177 cps/templates/login.html:11
-#: cps/templates/login.html:39 cps/web.py:2187
+#: cps/templates/login.html:39 cps/web.py:2191
 msgid "Login"
 msgstr "Masuk"
 
@@ -1819,7 +1819,7 @@ msgstr "Temukan"
 msgid "Show Random Books"
 msgstr "Tampilkan Buku Acak"
 
-#: cps/render_template.py:104 cps/templates/book_table.html:106 cps/web.py:1762
+#: cps/render_template.py:104 cps/templates/book_table.html:106 cps/web.py:1766
 msgid "Categories"
 msgstr "Kategori"
 
@@ -1832,7 +1832,7 @@ msgstr "Tampilkan pilihan kategori"
 #: cps/templates/book_table.html:107 cps/templates/cwa_settings.html:362
 #: cps/templates/cwa_settings.html:364 cps/templates/cwa_settings.html:1103
 #: cps/templates/hardcover_review_matches.html:140
-#: cps/templates/search_form.html:70 cps/web.py:1642 cps/web.py:1654
+#: cps/templates/search_form.html:70 cps/web.py:1646 cps/web.py:1658
 msgid "Series"
 msgstr "Seri"
 
@@ -1852,7 +1852,7 @@ msgstr "Penulis"
 msgid "Show Author Section"
 msgstr "Tampilkan pilihan penulis"
 
-#: cps/render_template.py:114 cps/templates/book_table.html:111 cps/web.py:1610
+#: cps/render_template.py:114 cps/templates/book_table.html:111 cps/web.py:1614
 msgid "Publishers"
 msgstr "Penerbit"
 
@@ -1863,7 +1863,7 @@ msgstr "Tampilkan pilihan penerbit"
 
 #: cps/render_template.py:117 cps/templates/book_table.html:109
 #: cps/templates/detail.html:706 cps/templates/search_form.html:108
-#: cps/web.py:1734
+#: cps/web.py:1738
 msgid "Languages"
 msgstr "Bahasa"
 
@@ -1872,7 +1872,7 @@ msgstr "Bahasa"
 msgid "Show Language Section"
 msgstr "Tampilkan pilihan bahasa"
 
-#: cps/render_template.py:121 cps/web.py:1694
+#: cps/render_template.py:121 cps/web.py:1698
 msgid "Ratings"
 msgstr "Peringkat"
 
@@ -1899,7 +1899,7 @@ msgstr "Buku yang Diarsipkan"
 msgid "Show Archived Books"
 msgstr "Tampilkan buku yang diarsipkan"
 
-#: cps/render_template.py:133 cps/web.py:1430
+#: cps/render_template.py:133 cps/web.py:1434
 msgid "Books List"
 msgstr "Daftar Buku"
 
@@ -2228,7 +2228,7 @@ msgstr "Peran tidak valid"
 msgid "Name and rules are required"
 msgstr ""
 
-#: cps/web.py:1117 cps/web.py:1214
+#: cps/web.py:1117 cps/web.py:1216
 msgid "Shelf name too long (max 100 characters)"
 msgstr ""
 
@@ -2242,206 +2242,206 @@ msgstr "Kesalahan menghapus Rak"
 msgid "Create Magic Shelf"
 msgstr "Buat Rak"
 
-#: cps/web.py:1207
+#: cps/web.py:1209
 msgid "Permission denied to change public status"
 msgstr ""
 
-#: cps/web.py:1211
+#: cps/web.py:1213
 #, fuzzy
 msgid "Shelf name is required"
 msgstr "Isian Ini Diperlukan"
 
-#: cps/web.py:1245
+#: cps/web.py:1247
 #, fuzzy
 msgid "Error updating shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1260
+#: cps/web.py:1262
 #, fuzzy
 msgid "Edit Magic Shelf"
 msgstr "Edit Rak"
 
-#: cps/web.py:1273
+#: cps/web.py:1277
 #, fuzzy
 msgid "Shelf not found"
 msgstr "Pengguna tidak ditemukan"
 
-#: cps/web.py:1278
+#: cps/web.py:1282
 msgid "Permission denied"
 msgstr ""
 
-#: cps/web.py:1309
+#: cps/web.py:1313
 #, fuzzy
 msgid "Shelf duplicated successfully"
 msgstr "{} pengguna berhasil dihapus"
 
-#: cps/web.py:1315
+#: cps/web.py:1319
 #, fuzzy
 msgid "Error duplicating shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1342
+#: cps/templates/magic_shelf_edit.html:452 cps/web.py:1346
 msgid ""
 "System shelves cannot be deleted. You can hide them in your user profile "
 "settings."
 msgstr ""
 
-#: cps/web.py:1359
+#: cps/web.py:1363
 #, fuzzy
 msgid "Error deleting shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1375
+#: cps/web.py:1379
 msgid ""
 "You cannot hide your own shelves. Delete them instead if you don't want them."
 msgstr ""
 
-#: cps/web.py:1385
+#: cps/web.py:1389
 msgid "Shelf already hidden"
 msgstr ""
 
-#: cps/web.py:1399
+#: cps/web.py:1403
 #, fuzzy
 msgid "Error hiding shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1413
+#: cps/web.py:1417
 msgid "Shelf was not hidden"
 msgstr ""
 
-#: cps/web.py:1422
+#: cps/web.py:1426
 #, fuzzy
 msgid "Error unhiding shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/admin.html:18 cps/web.py:1569
+#: cps/templates/admin.html:18 cps/web.py:1573
 msgid "Downloads"
 msgstr "Unduhan"
 
-#: cps/web.py:1721
+#: cps/web.py:1725
 msgid "File formats list"
 msgstr "Daftar format berkas"
 
-#: cps/web.py:1961 cps/web.py:1999
+#: cps/web.py:1965 cps/web.py:2003
 #, fuzzy
 msgid "Please configure the SMTP mail settings first..."
 msgstr "Harap atur pengaturan email SMTP terlebih dahulu..."
 
-#: cps/web.py:1965
+#: cps/web.py:1969
 #, fuzzy
 msgid "Oops! Please update your profile with a valid eReader Email."
 msgstr ""
 "Harap perbarui profil Anda dengan alamat e-mail Kirim ke Kindle yang valid."
 
-#: cps/web.py:1987
+#: cps/web.py:1991
 #, python-format
 msgid "Success! Book queued for sending to %(eReadermail)s"
 msgstr "Buku telah diantrikan untuk dikirim ke %(eReadermail)s"
 
-#: cps/web.py:1990 cps/web.py:2048
+#: cps/web.py:1994 cps/web.py:2052
 #, python-format
 msgid "Oops! There was an error sending book: %(res)s"
 msgstr "Oops! Terjadi kesalahan saat mengirim buku: %(res)s"
 
-#: cps/web.py:2007 cps/web.py:2017
+#: cps/web.py:2011 cps/web.py:2021
 msgid "No email addresses selected"
 msgstr ""
 
-#: cps/web.py:2024
+#: cps/web.py:2028
 msgid "Additional email addresses are disabled for your account."
 msgstr ""
 
-#: cps/web.py:2046
+#: cps/web.py:2050
 #, fuzzy
 msgid "Success! Book queued for sending to the selected address(es)!"
 msgstr "Buku telah diantrikan untuk dikirim ke %(eReadermail)s"
 
-#: cps/web.py:2065
+#: cps/web.py:2069
 msgid "Please wait one minute to register next user"
 msgstr ""
 
 #: cps/templates/layout.html:136 cps/templates/layout.html:178
-#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2066
-#: cps/web.py:2070 cps/web.py:2075 cps/web.py:2079 cps/web.py:2085
-#: cps/web.py:2110 cps/web.py:2114 cps/web.py:2127 cps/web.py:2130
+#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2070
+#: cps/web.py:2074 cps/web.py:2079 cps/web.py:2083 cps/web.py:2089
+#: cps/web.py:2114 cps/web.py:2118 cps/web.py:2131 cps/web.py:2134
 msgid "Register"
 msgstr "Daftar"
 
-#: cps/web.py:2069 cps/web.py:2234
+#: cps/web.py:2073 cps/web.py:2238
 #, fuzzy
 msgid "Connection error to limiter backend, please contact your administrator"
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2074 cps/web.py:2126
+#: cps/web.py:2078 cps/web.py:2130
 msgid ""
 "Oops! Email server is not configured, please contact your administrator."
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2112
+#: cps/web.py:2116
 msgid "Oops! Your Email is not allowed."
 msgstr "Alamat email Anda tidak diizinkan untuk mendaftar"
 
-#: cps/web.py:2115
+#: cps/web.py:2119
 msgid "Success! Confirmation Email has been sent."
 msgstr "E-mail konfirmasi telah dikirimkan ke alamat email Anda."
 
-#: cps/web.py:2163
+#: cps/web.py:2167
 #, fuzzy
 msgid ""
 "Authentication loop detected. If you're experiencing login issues, please "
 "contact your administrator."
 msgstr "Instans Calibre-Web belum diatur, harap hubungi administrator Anda"
 
-#: cps/web.py:2208
+#: cps/web.py:2212
 #, fuzzy
 msgid ""
 "OAuth authentication is not properly configured. Please contact "
 "administrator."
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2213 cps/web.py:2240
+#: cps/web.py:2217 cps/web.py:2244
 #, fuzzy
 msgid "Cannot activate LDAP authentication"
 msgstr "Tidak dapat mengaktifkan autentikasi LDAP."
 
-#: cps/web.py:2222
+#: cps/web.py:2226
 msgid "Standard login is disabled."
 msgstr ""
 
-#: cps/web.py:2230
+#: cps/web.py:2234
 msgid "Please wait one minute before next login"
 msgstr ""
 
-#: cps/web.py:2248
+#: cps/web.py:2252
 msgid "Username cannot be empty"
 msgstr ""
 
-#: cps/web.py:2260
+#: cps/web.py:2264
 #, fuzzy, python-format
 msgid "you are now logged in as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2279
+#: cps/web.py:2283
 #, fuzzy, python-format
 msgid ""
 "Welcome! Your account has been automatically created. You are now logged in "
 "as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2284 cps/web.py:2287
+#: cps/web.py:2288 cps/web.py:2291
 #, fuzzy
 msgid ""
 "Authentication successful, but account creation failed. Please contact your "
 "administrator."
 msgstr "Instans Calibre-Web belum diatur, harap hubungi administrator Anda"
 
-#: cps/web.py:2291
+#: cps/web.py:2295
 msgid ""
 "Authentication successful, but no local account found. Please contact your "
 "administrator to create your account."
 msgstr ""
 
-#: cps/web.py:2299
+#: cps/web.py:2303
 #, fuzzy, python-format
 msgid ""
 "Fallback Login as: '%(nickname)s', LDAP Server not reachable, or user not "
@@ -2450,46 +2450,46 @@ msgstr ""
 "Login Pengganti sebagai: '%(nickname)s', Server LDAP tidak dapat dijangkau, "
 "atau pengguna tidak diketahui."
 
-#: cps/web.py:2305
+#: cps/web.py:2309
 #, fuzzy, python-format
 msgid "Could not login: %(message)s"
 msgstr "Tidak dapat login: %(message)s"
 
-#: cps/web.py:2328 cps/web.py:2329 cps/web.py:2372
+#: cps/web.py:2332 cps/web.py:2333 cps/web.py:2376
 #, fuzzy
 msgid "Wrong Username or Password"
 msgstr "Pengguna atau Kata Sandi salah"
 
-#: cps/web.py:2337
+#: cps/web.py:2341
 #, fuzzy
 msgid "New Password was sent to your email address"
 msgstr "Kata Sandi baru telah dikirimkan ke alamat email Anda"
 
-#: cps/web.py:2341
+#: cps/web.py:2345
 #, fuzzy
 msgid "An unknown error occurred. Please try again later."
 msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 
-#: cps/web.py:2343
+#: cps/web.py:2347
 #, fuzzy
 msgid "Please enter valid username to reset password"
 msgstr "Harap masukkan pengguna valid untuk mengatur ulang kata sandi"
 
-#: cps/web.py:2351
+#: cps/web.py:2355
 #, fuzzy, python-format
 msgid "You are now logged in as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2667
+#: cps/web.py:2671
 #, fuzzy
 msgid "Success! Profile Updated"
 msgstr "Profil diperbarui"
 
-#: cps/web.py:2673
+#: cps/web.py:2677
 msgid "Oops! An account already exists for this Email."
 msgstr "Ditemukan akun yang ada untuk alamat email ini"
 
-#: cps/web.py:2894
+#: cps/web.py:2898
 #, fuzzy
 msgid "Invalid book ID."
 msgstr "Peran tidak valid"
@@ -6271,12 +6271,12 @@ msgstr ""
 msgid "This is a pre-configured template shelf. You can edit it freely."
 msgstr ""
 
-#: cps/templates/magic_shelf_edit.html:399
+#: cps/templates/magic_shelf_edit.html:403
 #, fuzzy
 msgid "Share with Everyone (Public)"
 msgstr "Bagikan dengan Semua Orang"
 
-#: cps/templates/magic_shelf_edit.html:402
+#: cps/templates/magic_shelf_edit.html:406
 msgid ""
 "Other users can view this shelf. Users with \"Edit Public Shelves\" "
 "permission can edit/delete it."
