@@ -614,6 +614,42 @@ class KoboStatistics(Base):
     spent_reading_minutes = Column(Integer)
 
 
+# Server-side store of Kobo annotations (highlights and notes).
+# Stock Kobo firmware syncs annotations against the Kobo Reading Services API;
+# CWA answers those requests from this table so the device never asks Kobo's
+# cloud about books it doesn't know (Kobo's answers make the device delete its
+# local annotations). Deletions are stored as tombstones so the server-side
+# backup survives even a device-side deletion.
+class KoboAnnotation(Base):
+    __tablename__ = 'kobo_annotation'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    # Books are referenced by Calibre uuid (= Kobo entitlement id) rather than
+    # book id so the backup survives a `calibredb restore_database`, which can
+    # reassign book ids
+    book_uuid = Column(String, nullable=False)
+    annotation_id = Column(String, nullable=False)  # Kobo annotation UUID
+    annotation_type = Column(String)  # "highlight" or "note"
+    highlighted_text = Column(String)
+    note_text = Column(String)
+    highlight_color = Column(String)
+    raw_data = Column(String)  # full annotation JSON exactly as sent by the device
+    client_last_modified = Column(String)  # clientLastModifiedUtc reported by the device
+    deleted = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_modified = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index('ix_kobo_annotation_user_annotation', 'user_id', 'annotation_id', unique=True),
+        Index('ix_kobo_annotation_user_book', 'user_id', 'book_uuid'),
+    )
+
+    def __repr__(self):
+        return f'<KoboAnnotation annotation_id={self.annotation_id} book_uuid={self.book_uuid} deleted={self.deleted}>'
+
+
 class KoboAnnotationSync(Base):
     """Track which Kobo annotations have been synced to external services (e.g., Hardcover)."""
     __tablename__ = 'kobo_annotation_sync'
