@@ -1,0 +1,183 @@
+name: Docker Publish
+# Builds and pushes a multi-arch image to GHCR on every push.
+#   - Pushes/merges to main   -> versioned tags (1.1, 1.2, ...) + latest
+#   - Pushes to other branches -> the 'nightly' tag
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+# Serialize runs per branch so version numbers can't race on main
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # --------------------------------------------------------------------------
+  # JOB 1: Work out the image name and the tag(s) for this run
+  # --------------------------------------------------------------------------
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      image: ${{ steps.vars.outputs.image }}
+      version: ${{ steps.vars.outputs.version }}
+      is_main: ${{ steps.vars.outputs.is_main }}
+    steps:
+      - name: Checkout code (with tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine image name and version
+        id: vars
+        run: |
+          # GHCR requires a lowercase image name
+          image="${GITHUB_REPOSITORY,,}"
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "is_main=true" >> "$GITHUB_OUTPUT"
+
+            # Find the highest existing version tag (vMAJOR.MINOR) and bump the minor.
+            # With no tags yet, the baseline is v1.0 so the first build becomes 1.1.
+            latest=$(git tag -l 'v[0-9]*.[0-9]*' | sort -V | tail -n 1)
+            latest=${latest:-v1.0}
+            base=${latest#v}
+            major=${base%%.*}
+            minor=${base#*.}
+            minor=${minor%%.*}
+            version="${major}.$((minor + 1))"
+          else
+            echo "is_main=false" >> "$GITHUB_OUTPUT"
+            version="nightly"
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building ${image}:${version}"
+
+  # --------------------------------------------------------------------------
+  # JOB 2: Build each platform natively and push by digest
+  # --------------------------------------------------------------------------
+  build:
+    needs: prepare
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: GitHub Container Registry Login
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          provenance: false
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ needs.prepare.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            VERSION=${{ needs.prepare.outputs.version }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # --------------------------------------------------------------------------
+  # JOB 3: Merge digests into a multi-arch manifest and tag it
+  # --------------------------------------------------------------------------
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push the version git tag on main builds
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: GitHub Container Registry Login
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ needs.prepare.outputs.image }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          if [ "${{ needs.prepare.outputs.is_main }}" = "true" ]; then
+            tags="-t ${IMAGE}:${VERSION} -t ${IMAGE}:latest"
+          else
+            tags="-t ${IMAGE}:nightly"
+          fi
+          docker buildx imagetools create ${tags} \
+            $(printf "${IMAGE}@sha256:%s " *)
+
+      # Record the released version as a git tag so the next main build increments it
+      - name: Push version tag
+        if: needs.prepare.outputs.is_main == 'true'
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
