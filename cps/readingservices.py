@@ -149,57 +149,52 @@ def proxy_or_empty_response():
     return make_response(jsonify({}))
 
 
-def requires_reading_services_auth_and_config(f):
+def requires_reading_services_config(f):
     """
-    Auth decorator for Reading Services endpoints.
-
-    With Kobo sync enabled, requests from devices set up against CWA are
-    handled locally (annotations are stored and served by CWA) so that Kobo's
-    cloud is never asked about books it doesn't know. Requests that can't be
-    authenticated fall back to the Kobo Store proxy when that is enabled, and
-    to a 401 otherwise — never to a destructive answer.
+    Config gate for Reading Services endpoints: devices should only be
+    pointed at us while Kobo sync is enabled. Authentication is handled per
+    endpoint, after the requested content has been identified — requests
+    about CWA books must never fall through to Kobo's cloud (its answers
+    make the device delete its local annotations), authenticated or not.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Devices should only be pointed at us when Kobo sync is enabled
         if not config.config_kobo_sync:
             log.debug("Kobo sync disabled, not handling reading services request")
-            return proxy_or_empty_response()
-
-        # Check if user is authenticated (cookie set during Kobo sync requests)
-        if current_user.is_authenticated:
-            return f(*args, **kwargs)
-
-        if config.config_kobo_proxy:
-            # User not authenticated - just proxy to Kobo
-            log.debug("Reading services request without auth, proxying to Kobo")
-            return proxy_to_kobo_reading_services()
-
-        # Without the store proxy, an unauthenticated request can't be served by
-        # anyone. 401 keeps the device's local annotations untouched.
-        log.debug("Reading services request without auth and Kobo proxy disabled, returning 401")
-        return make_response(jsonify({"error": "Unauthorized"}), 401)
+            if config.config_kobo_proxy:
+                return proxy_to_kobo_reading_services()
+            return make_response(jsonify({"error": "Kobo sync is disabled"}), 503)
+        return f(*args, **kwargs)
     return decorated_function
 
 
-def is_cwa_content_id(content_id):
-    """Whether an entitlement/content id belongs to a book in the CWA library."""
+def find_known_book_uuids(content_ids):
+    """Return the subset of content_ids that are uuids of books in the CWA library."""
+    known = set()
+    if not content_ids:
+        return known
     try:
-        return calibre_db.get_book_by_uuid(content_id) is not None
+        calibre_db.ensure_session()
+        for i in range(0, len(content_ids), SYNC_CHECK_BATCH_SIZE):
+            chunk = content_ids[i:i + SYNC_CHECK_BATCH_SIZE]
+            for row in calibre_db.session.query(db.Books.uuid).filter(db.Books.uuid.in_(chunk)):
+                known.add(row.uuid)
     except Exception as e:
-        log.error(f"Error checking content id {content_id}: {e}")
-        return False
+        log.error(f"Error looking up content ids in library: {e}")
+    return known
 
 
-def store_annotation_changes(book, data):
+def store_annotation_changes(book_uuid, data):
     """Persist annotation changes uploaded by the device into the local store.
 
     Updated annotations are upserted with their full raw JSON so they can be
     served back verbatim; deleted ones are tombstoned (never hard-deleted) so
-    the server-side backup survives device-side deletions.
+    the server-side backup survives device-side deletions. book_uuid is the
+    Kobo entitlement id: the Calibre uuid for CWA books, the store id for
+    Kobo store purchases.
     """
     updated_annotations = [a for a in (data.get("updatedAnnotations") or [])
-                           if isinstance(a, dict) and a.get("id")]
+                           if isinstance(a, dict) and a.get("id") and isinstance(a.get("id"), str)]
     deleted_ids = [annotation_id for annotation_id in (data.get("deletedAnnotationIds") or [])
                    if isinstance(annotation_id, str)]
 
@@ -215,7 +210,6 @@ def store_annotation_changes(book, data):
                 ub.KoboAnnotation.annotation_id.in_(chunk)):
             existing[row.annotation_id] = row
 
-    book_uuid = str(book.uuid)
     now = datetime.now(timezone.utc)
     stored = tombstoned = 0
     for annotation in updated_annotations:
@@ -247,9 +241,9 @@ def store_annotation_changes(book, data):
 
     try:
         ub.session_commit()
-        log.info(f"Kobo annotations for book {book.id}: stored {stored}, tombstoned {tombstoned}")
+        log.info(f"Kobo annotations for content {book_uuid}: stored {stored}, tombstoned {tombstoned}")
     except Exception as e:
-        log.error(f"Failed to store Kobo annotations for book {book.id}: {e}")
+        log.error(f"Failed to store Kobo annotations for content {book_uuid}: {e}")
         ub.session.rollback()
 
 
@@ -613,23 +607,39 @@ def process_annotation_for_sync(
 
 @csrf.exempt
 @readingservices_api_v3.route("/content/<entitlement_id>/annotations", methods=["GET", "PATCH"])
-@requires_reading_services_auth_and_config
+@requires_reading_services_config
 def handle_annotations(entitlement_id):
     """
     Handle annotation requests for a specific book.
     GET: Serve annotations for a CWA book from the local store
     PATCH: Store annotation changes locally (backup) and optionally sync to Hardcover
 
-    Books unknown to CWA (e.g. Kobo store purchases) are proxied to Kobo.
-    Books known to CWA are always answered locally: Kobo's cloud doesn't know
-    them, and its answers would make the device delete its local annotations.
+    Books unknown to CWA (e.g. Kobo store purchases) are proxied to Kobo,
+    which stays authoritative for them; their uploads are still backed up
+    locally when the user can be identified. Books known to CWA are always
+    answered locally — even unauthenticated requests are never proxied,
+    because Kobo's cloud doesn't know them and its answers would make the
+    device delete its local annotations.
     """
     book = get_book_by_entitlement_id(entitlement_id)
     if not book:
         log.debug(f"Annotations request for entitlement {entitlement_id} unknown to CWA")
         if config.config_kobo_proxy:
+            # Back up store-book annotation uploads too before forwarding
+            if request.method == "PATCH" and current_user.is_authenticated:
+                data = request.get_json(silent=True)
+                if isinstance(data, dict):
+                    try:
+                        store_annotation_changes(entitlement_id, data)
+                    except Exception as e:
+                        log.error(f"Error storing annotations for content {entitlement_id}: {e}")
             return proxy_to_kobo_reading_services()
         return make_response(jsonify({"error": "Content not found"}), 404)
+
+    # CWA book: requires a user to answer, and must never fall through to Kobo
+    if not current_user.is_authenticated:
+        log.debug(f"Unauthenticated annotations request for CWA book {entitlement_id}, returning 401")
+        return make_response(jsonify({"error": "Unauthorized"}), 401)
 
     if request.method == "GET":
         return make_response(jsonify(get_stored_annotations_response(book)))
@@ -646,7 +656,7 @@ def handle_annotations(entitlement_id):
 
     # Always back the changes up locally, independent of Hardcover
     try:
-        store_annotation_changes(book, data)
+        store_annotation_changes(str(book.uuid), data)
     except Exception as e:
         log.error(f"Error storing annotations for book {book.id}: {e}")
 
@@ -729,7 +739,7 @@ def handle_annotations(entitlement_id):
 
 @csrf.exempt
 @readingservices_api_v3.route("/content/checkforchanges", methods=["POST"])
-@requires_reading_services_auth_and_config
+@requires_reading_services_config
 def handle_check_for_changes():
     """
     Handle check for changes request.
@@ -738,7 +748,8 @@ def handle_check_for_changes():
     books in the CWA library the answer is always "no changes" — a Kobo cloud
     answer for them would make the device delete its local annotations. With
     the store proxy enabled, entries for books unknown to CWA are still
-    forwarded to Kobo so store purchases keep working.
+    forwarded to Kobo so store purchases keep working. None of this needs the
+    user's identity, so it applies to unauthenticated requests as well.
     """
     data = request.get_json(silent=True)
     log.debug(f"checkforchanges payload: {data}")
@@ -750,9 +761,10 @@ def handle_check_for_changes():
     if data is None:
         return proxy_to_kobo_reading_services()
 
-    filtered, removed = filter_out_known_content(data, is_cwa_content_id)
-    if not removed:
+    known_uuids = find_known_book_uuids(extract_content_ids(data))
+    if not known_uuids:
         return proxy_to_kobo_reading_services()
+    filtered, removed = filter_out_known_content(data, lambda cid: cid in known_uuids)
     if not extract_content_ids(filtered):
         # Request was only about CWA books; nothing to ask Kobo
         log.debug(f"checkforchanges only referenced CWA books ({len(removed)}), answering no changes")
@@ -763,7 +775,7 @@ def handle_check_for_changes():
 
 @csrf.exempt
 @readingservices_userstorage.route("/<path:subpath>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-@requires_reading_services_auth_and_config
+@requires_reading_services_config
 def handle_user_storage(subpath):
     """
     Handle UserStorage API requests (e.g., /api/UserStorage/Metadata).
@@ -774,7 +786,7 @@ def handle_user_storage(subpath):
 
 @csrf.exempt
 @readingservices_api_v3.route("/<path:subpath>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-@requires_reading_services_auth_and_config
+@requires_reading_services_config
 def handle_unknown_reading_service_request(subpath):
     """
     Catch-all handler for any reading services requests not explicitly handled.
