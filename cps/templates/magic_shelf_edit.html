@@ -388,7 +388,11 @@ div.help-panel > .panel-body {
                             <input style="margin-right: 2rem !important;" type="checkbox" id="shelf-kobo-sync" {{ 'checked' if shelf and shelf.kobo_sync else '' }}>
                             Enable Kobo sync (shelf appears on Kobo devices)
                         </label>
-                        <small class="form-text text-muted">Only works if Kobo integration is enabled</small>
+                        {% if kobo_magic_sync_enabled %}
+                        <small class="form-text text-muted">Requires Kobo sync (Basic Configuration) and "Sync Magic Shelves to Kobo" (CWA Settings) to be enabled</small>
+                        {% else %}
+                        <small class="form-text" style="color: #e0a800;">⚠ This will have no effect: enable Kobo sync in Basic Configuration and "Sync Magic Shelves to Kobo" in CWA Settings first</small>
+                        {% endif %}
                     </div>
 
                     <!-- Public Shelf Checkbox (only for custom shelves with permission) -->

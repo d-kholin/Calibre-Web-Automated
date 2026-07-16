@@ -8,7 +8,7 @@
 from .cw_login import current_user
 from . import ub
 from datetime import datetime, timezone
-from sqlalchemy.sql.expression import or_, and_, true
+from sqlalchemy.sql.expression import and_, true
 # from sqlalchemy import exc
 
 
@@ -56,11 +56,30 @@ def change_archived_books(book_id, state=None, message=None):
 # select all books which are synced by the current user and do not belong to a synced shelf and set them to archive
 # select all shelves from current user which are synced and do not belong to the "only sync" shelves
 def update_on_sync_shelfs(user_id):
+    # Books on the user's Kobo-flagged magic shelves must not be archived off
+    # the device - membership is computed dynamically, so it never appears in
+    # the BookShelf table this query checks (ignore_config: a disabled feature
+    # gate must not cause removals either)
+    try:
+        from .kobo import get_magic_shelf_book_ids_for_kobo
+        protected_magic_ids = get_magic_shelf_book_ids_for_kobo(user_id, ignore_config=True)
+    except Exception as e:
+        from . import logger
+        logger.create().error("Failed to resolve magic shelf books for user %s: %s", user_id, e)
+        protected_magic_ids = set()
+
+    # Books on any of the user's Kobo-flagged classic shelves stay as well.
+    # (The previous query joined Shelf on user_id alone - a cross join that
+    # archived everything or nothing depending on whether any non-Kobo shelf
+    # existed.)
+    kobo_shelf_books = (ub.session.query(ub.BookShelf.book_id)
+                        .join(ub.Shelf, ub.BookShelf.shelf == ub.Shelf.id)
+                        .filter(ub.Shelf.user_id == user_id, ub.Shelf.kobo_sync == True))
+    allowed_ids = {row.book_id for row in kobo_shelf_books} | protected_magic_ids
+
     books_to_archive = (ub.session.query(ub.KoboSyncedBooks)
-                        .join(ub.BookShelf, ub.KoboSyncedBooks.book_id == ub.BookShelf.book_id, isouter=True)
-                        .join(ub.Shelf, ub.Shelf.user_id == user_id, isouter=True)
-                        .filter(or_(ub.Shelf.kobo_sync == 0, ub.Shelf.kobo_sync==None))
-                        .filter(ub.KoboSyncedBooks.user_id == user_id).all())
+                        .filter(ub.KoboSyncedBooks.user_id == user_id)
+                        .filter(ub.KoboSyncedBooks.book_id.notin_(allowed_ids)).all())
     for b in books_to_archive:
         change_archived_books(b.book_id, True)
         ub.session.query(ub.KoboSyncedBooks) \
