@@ -1149,11 +1149,13 @@ def create_magic_shelf():
         except:
             language_map[lang.lang_code] = lang.lang_code
 
-    return render_title_template('magic_shelf_edit.html', 
-                                 title=_("Create Magic Shelf"), 
+    return render_title_template('magic_shelf_edit.html',
+                                 title=_("Create Magic Shelf"),
                                  page="magic_shelf_create",
                                  allowed_icons=ALLOWED_ICONS,
-                                 languages=language_map)
+                                 languages=language_map,
+                                 kobo_magic_sync_enabled=bool(config.config_kobo_sync
+                                                              and config.config_kobo_sync_magic_shelves))
 
 
 @web.route("/magicshelf/<int:shelf_id>/edit", methods=["GET", "POST"])
@@ -1255,12 +1257,14 @@ def edit_magic_shelf(shelf_id):
         except:
             language_map[lang.lang_code] = lang.lang_code
 
-    return render_title_template('magic_shelf_edit.html', 
-                                 shelf=shelf, 
-                                 title=_("Edit Magic Shelf"), 
+    return render_title_template('magic_shelf_edit.html',
+                                 shelf=shelf,
+                                 title=_("Edit Magic Shelf"),
                                  page="magic_shelf_edit",
                                  allowed_icons=ALLOWED_ICONS,
-                                 languages=language_map)
+                                 languages=language_map,
+                                 kobo_magic_sync_enabled=bool(config.config_kobo_sync
+                                                              and config.config_kobo_sync_magic_shelves))
 
 
 @web.route("/magicshelf/<int:shelf_id>/duplicate", methods=["POST"])

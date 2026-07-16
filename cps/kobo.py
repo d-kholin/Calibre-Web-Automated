@@ -129,12 +129,23 @@ def convert_to_kobo_timestamp_string(timestamp):
         return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def get_magic_shelf_book_ids_for_kobo(user_id):
-    if not config.config_kobo_sync_magic_shelves:
-        return set()
+def get_magic_shelf_book_ids_for_kobo(user_id, ignore_config=False):
+    """Book ids on the user's Kobo-flagged magic shelves.
 
+    Honors the global 'Sync Magic Shelves to Kobo' option (CWA Settings)
+    unless ignore_config is set - destructive decisions (removing or
+    archiving books already on the device) must not be based on a disabled
+    feature gate, so those callers pass ignore_config=True.
+    """
     magic_shelves = ub.session.query(ub.MagicShelf).filter_by(user_id=user_id, kobo_sync=True).all()
     if not magic_shelves:
+        return set()
+
+    if not config.config_kobo_sync_magic_shelves and not ignore_config:
+        log.warning("Kobo Sync: user %s has %s magic shelf/shelves flagged for Kobo sync, but "
+                    "'Sync Magic Shelves to Kobo' is disabled in the CWA Settings page - "
+                    "these shelves will NOT be synced until that option is enabled",
+                    user_id, len(magic_shelves))
         return set()
 
     book_ids = set()
@@ -186,6 +197,11 @@ def HandleSyncRequest():
     magic_shelf_book_ids = set()
     if current_user.kobo_only_shelves_sync:
         magic_shelf_book_ids = get_magic_shelf_book_ids_for_kobo(current_user.id)
+        # Books on Kobo-flagged magic shelves are protected from removal even
+        # while the global magic-shelf sync option is off - a disabled feature
+        # gate must not cause books to be deleted from the device
+        protected_magic_ids = magic_shelf_book_ids or \
+            get_magic_shelf_book_ids_for_kobo(current_user.id, ignore_config=True)
         try:
             # Check all books that are on Kobo according to the database
             synced_books_query = ub.session.query(ub.KoboSyncedBooks.book_id).filter(ub.KoboSyncedBooks.user_id == current_user.id)
@@ -196,8 +212,8 @@ def HandleSyncRequest():
                                    .join(ub.Shelf, ub.BookShelf.shelf == ub.Shelf.id)
                                    .filter(ub.Shelf.user_id == current_user.id, ub.Shelf.kobo_sync == True))
             allowed_book_ids = {item.book_id for item in allowed_books_query}
-            if magic_shelf_book_ids:
-                allowed_book_ids |= magic_shelf_book_ids
+            if protected_magic_ids:
+                allowed_book_ids |= protected_magic_ids
 
             # Spot the difference: books that need to be deleted
             books_to_delete_ids = synced_book_ids - allowed_book_ids
